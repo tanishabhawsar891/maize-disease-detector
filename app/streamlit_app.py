@@ -39,7 +39,10 @@ def gradcam(model, x, idx):
     h1.remove()
     a, g = store["a"], store["a"].grad
     w = g.mean(dim=(2, 3), keepdim=True)
-    cam = F.relu((w * a).sum(1, keepdim=True))
+    cam = F.relu((w * a).sum(1, keepdim=True)..., :3]
+    st.image(overlay, caption="Grad-CAM: model ne kahan dekha", width=300)
+
+    st.info(kb["disclaimer_hi"]))
     cam = F.interpolate(cam, size=(224, 224), mode="bilinear", align_corners=False)[0, 0]
     cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
     return cam.detach().numpy()
@@ -66,7 +69,11 @@ if file:
         conf = float(probs[idx])
         cam = gradcam(model, tf(img).unsqueeze(0), idx)
 
-    if conf < THRESHOLD:
+    entropy = float(-(probs * np.log(probs + 1e-9)).sum())
+    not_maize = entropy > 0.8
+    if not_maize:
+        st.error("यह मक्का की पत्ती नहीं लग रही। कृपया मक्का की पत्ती की साफ़ फोटो डालें। / This does not look like a maize leaf.")
+    elif conf < THRESHOLD:
         st.warning("पक्का नहीं कह सकते। कृपया पत्ती की ज़्यादा साफ़ फोटो डालें। / Not sure, please upload a clearer photo.")
     else:
         info = kb[CLASSES[idx]]
@@ -78,7 +85,4 @@ if file:
         st.markdown(f"**रोकथाम:** {info['prevention_hi']}")
 
     base = np.array(img.resize((224, 224))) / 255.0
-    overlay = 0.5 * base + 0.5 * cm.jet(cam)[..., :3]
-    st.image(overlay, caption="Grad-CAM: model ne kahan dekha", width=300)
-
-    st.info(kb["disclaimer_hi"])
+    overlay = 0.5 * base + 0.5 * cm.jet(cam)
